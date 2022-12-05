@@ -45,13 +45,13 @@ export class BlendMotion<T> {
   }
 
   initialize() {
-    this._motion.segueTo(createAnimation({ value: 1 }), 32);
+    this._motion.segueTo(createAnimation({ value: 1 }), 32, easings.easeInExpo);
   }
 
   transitionToA() {
     this._motion.segueTo(
       createAnimation({ value: 0 }),
-      2000,
+      500,
       easings.easeOutExpo
     );
   }
@@ -59,7 +59,7 @@ export class BlendMotion<T> {
   transitionToB() {
     this._motion.segueTo(
       createAnimation({ value: 1 }),
-      2000,
+      500,
       easings.easeOutExpo
     );
   }

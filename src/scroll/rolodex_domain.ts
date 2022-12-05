@@ -16,6 +16,12 @@ export interface RolodexItem {
 const MULTIPLIER = 2.25;
 
 export class RolodexDomain {
+  private _amount: number;
+  private _width: number;
+  private _offset: number;
+  private _startIndex: number;
+  private _index: number;
+  private _disableTimeout: number;
   private _axisDomain: SnapAxisDomain;
   private _minIndex: number;
   private _maxIndex: number;
@@ -38,9 +44,11 @@ export class RolodexDomain {
     minIndex = -Infinity,
     maxIndex = Infinity
   ) {
+    this._amount = 5;
     this._axisDomain = axisDomain;
     this._minIndex = minIndex;
     this._maxIndex = maxIndex;
+    this._disableTimeout = 0;
     this._horizontalItems = this.createItems();
     this._rolodexItems = this.createItems();
     this._blendMotion = new BlendMotion(
@@ -78,7 +86,7 @@ export class RolodexDomain {
   private createItems() {
     const items: RolodexItem[] = [];
 
-    for (let x = 0; x <= 5; x++) {
+    for (let x = 0; x <= this._amount; x++) {
       items.push({
         index: x,
         transform: {
@@ -95,38 +103,52 @@ export class RolodexDomain {
 
   setToSelectedMode() {
     this._blendMotion.transitionToA();
+    clearTimeout(this._disableTimeout);
+    setTimeout(() => {
+      this._axisDomain.disable();
+    }, 500);
   }
 
   setToOverviewMode() {
+    clearTimeout(this._disableTimeout);
+    this._axisDomain.enable();
     this._blendMotion.transitionToB();
+  }
+
+  selectItem(index: number) {
+    const position = (index * this._width) / MULTIPLIER;
+    this._axisDomain.stop();
+    this._axisDomain.animateTo(-position, 500);
+    this.setToSelectedMode();
   }
 
   private updateHorizontalItems() {
     const horizontalItems = this._horizontalItems;
-    const width = this.axis.size === 0 ? 0.0000001 : this.axis.size;
-    const offset = this.axis.start;
-    const index = Math.floor(offset / width);
-    const startIndex = index - 4;
+    const width = this._width;
+    const startIndex = this._startIndex;
+    const offset = this._offset;
 
-    for (let i = 0; i <= 5; i++) {
+    for (let i = 0; i <= this._amount; i++) {
       const itemIndex = startIndex + i;
-      const xOffset = itemIndex * width;
-      horizontalItems[i].index = itemIndex;
+      const startOffset = (i - 3) * width;
+      const percentage = (offset % width) / width;
+      const finalOffset = startOffset - percentage * width;
+
+      horizontalItems[i].index = Math.floor(itemIndex);
       horizontalItems[i].scale = 1;
       horizontalItems[i].transform.y = 0;
-      horizontalItems[i].transform.x = offset + xOffset;
+      horizontalItems[i].transform.x = finalOffset;
       horizontalItems[i].veilOpacity = 0;
     }
   }
 
   private updateRolodexItems() {
-    const amount = 5;
-    const width = this.axis.size === 0 ? 0.00000001 : this.axis.size;
-    const adjustedWidth = width - width * 0.05;
-    const start = this.axis.start * MULTIPLIER + width;
+    const width = this._width;
+    const amount = this._amount;
+    const startIndex = this._startIndex;
+    const start = this._offset + this._width;
+    const adjustedWidth = width - width * 0.15;
     const rolodexItems = this._rolodexItems;
-    const index = Math.floor(start / width);
-    const startIndex = index - amount + 1;
     const transformWidth = amount * width;
 
     for (let i = 0; i <= amount; i++) {
@@ -138,7 +160,7 @@ export class RolodexDomain {
       const scale = 0.95 + transformedPercentage * 0.05;
       const position = transformedPercentage * adjustedWidth;
 
-      rolodexItems[i].index = startIndex + i;
+      rolodexItems[i].index = Math.floor(startIndex + i);
       rolodexItems[i].scale = scale;
       rolodexItems[i].transform.y = 0;
       rolodexItems[i].transform.x = position;
@@ -147,9 +169,20 @@ export class RolodexDomain {
   }
 
   private updateItems() {
+    this.updateScrollState();
     this.updateHorizontalItems();
     this.updateRolodexItems();
     this._blendMotion.update();
+  }
+
+  private updateScrollState() {
+    this._width = this.axis.size === 0 ? 0.00000001 : this.axis.size;
+    this._offset = this.axis.start * MULTIPLIER;
+    this._index =
+      this._offset < 0
+        ? Math.ceil(this._offset / this._width)
+        : Math.floor(this._offset / this._width);
+    this._startIndex = this._index - this._amount + 2;
   }
 
   dispose() {
