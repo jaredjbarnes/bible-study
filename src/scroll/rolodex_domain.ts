@@ -21,7 +21,7 @@ export class RolodexDomain {
   private _offset: number;
   private _startIndex: number;
   private _index: number;
-  private _disableTimeout: number;
+  private _disableTimeoutId: number;
   private _axisDomain: SnapAxisDomain;
   private _minIndex: number;
   private _maxIndex: number;
@@ -48,7 +48,7 @@ export class RolodexDomain {
     this._axisDomain = axisDomain;
     this._minIndex = minIndex;
     this._maxIndex = maxIndex;
-    this._disableTimeout = 0;
+    this._disableTimeoutId = 0;
     this._horizontalItems = this.createItems();
     this._rolodexItems = this.createItems();
     this._blendMotion = new BlendMotion(
@@ -103,14 +103,14 @@ export class RolodexDomain {
 
   setToSelectedMode() {
     this._blendMotion.transitionToA();
-    clearTimeout(this._disableTimeout);
-    setTimeout(() => {
+    clearTimeout(this._disableTimeoutId);
+    this._disableTimeoutId = setTimeout(() => {
       this._axisDomain.disable();
-    }, 500);
+    }, 500) as unknown as number;
   }
 
   setToOverviewMode() {
-    clearTimeout(this._disableTimeout);
+    clearTimeout(this._disableTimeoutId);
     this._axisDomain.enable();
     this._blendMotion.transitionToB();
   }
@@ -160,7 +160,7 @@ export class RolodexDomain {
       const scale = 0.95 + transformedPercentage * 0.05;
       const position = transformedPercentage * adjustedWidth;
 
-      rolodexItems[i].index = Math.floor(startIndex + i);
+      rolodexItems[i].index = Math.floor(itemIndex);
       rolodexItems[i].scale = scale;
       rolodexItems[i].transform.y = 0;
       rolodexItems[i].transform.x = position;
