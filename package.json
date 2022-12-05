@@ -1,0 +1,36 @@
+{
+  "name": "bible-study",
+  "version": "1.0.0",
+  "description": "Making studying beautiful",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "clsx": "^1.2.1",
+    "ergo-hex": "0.0.7",
+    "hammerjs": "^2.0.8",
+    "motion-ux": "^7.2.17",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-jss": "^10.9.2",
+    "typescript": "^4.9.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.5",
+    "@storybook/addon-actions": "^6.5.13",
+    "@storybook/addon-essentials": "^6.5.13",
+    "@storybook/addon-interactions": "^6.5.13",
+    "@storybook/addon-links": "^6.5.13",
+    "@storybook/builder-webpack4": "^6.5.13",
+    "@storybook/manager-webpack4": "^6.5.13",
+    "@storybook/react": "^6.5.13",
+    "@storybook/testing-library": "^0.0.13",
+    "@types/react": "^18.0.26",
+    "babel-loader": "^8.3.0"
+  }
+}
