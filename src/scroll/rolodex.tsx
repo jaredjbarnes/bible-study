@@ -28,9 +28,9 @@ export const Rolodex = React.forwardRef(function ({
 }: RolodexProps) {
   const classes = useStyles();
   const items = useAsyncValue(domain.itemsBroadcast);
-  const size = useAsyncValue(domain.axis.sizeBroadcast);
   const rootRef = useRef<HTMLDivElement | null>(null);
-
+  
+  useAsyncValue(domain.axis.sizeBroadcast);
   useHorizontalResizing(rootRef, domain.axis);
   useHorizontalPanning(rootRef, domain.axis);
 

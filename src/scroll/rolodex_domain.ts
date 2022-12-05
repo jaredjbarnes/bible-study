@@ -13,7 +13,7 @@ export interface RolodexItem {
   veilOpacity: number;
 }
 
-const MULTIPLIER = 2.5;
+const MULTIPLIER = 2.25;
 
 export class RolodexDomain {
   private _axisDomain: SnapAxisDomain;

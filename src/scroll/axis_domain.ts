@@ -116,7 +116,7 @@ export class AxisDomain implements Axis {
   }
 
   initialize(value: number) {
-    this._motion.segueTo(createAnimation({ offset: value }));
+    this._motion.segueTo(createAnimation({ offset: value }), 32);
   }
 
   reset() {

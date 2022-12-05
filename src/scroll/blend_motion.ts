@@ -9,7 +9,7 @@ import {
 
 export class BlendMotion<T> {
   private _motion: Motion<{ value: number }>;
-  private _animation: Animation<{value: T}>;
+  private _animation: Animation<{ value: T }>;
   private _transitionValue: number;
   private _value: ObservableValue<T>;
 
@@ -44,8 +44,8 @@ export class BlendMotion<T> {
     this._value.setValue(this._animation.currentValues.value);
   }
 
-  initialize(){
-    this.transitionToB();
+  initialize() {
+    this._motion.segueTo(createAnimation({ value: 1 }), 32);
   }
 
   transitionToA() {
