@@ -1,5 +1,5 @@
-import { Unsubscribe } from "ergo-hex";
-import { easings } from "motion-ux";
+import { ObservableValue, Unsubscribe } from "ergo-hex";
+import { createAnimation, easings } from "motion-ux";
 import { BlendMotion } from "./blend_motion";
 import { SnapAxisDomain } from "./snap_axis_domain";
 
@@ -11,8 +11,17 @@ export interface RolodexItem {
   };
   scale: number;
   veilOpacity: number;
+  opacity: number;
 }
 
+const opacityAnimation = createAnimation({
+  opacity: {
+    from: 0,
+    "25%": 0,
+    "50%": 1,
+    to: 1,
+  },
+});
 const MULTIPLIER = 2.25;
 
 export class RolodexDomain {
@@ -21,7 +30,6 @@ export class RolodexDomain {
   private _offset: number;
   private _startIndex: number;
   private _index: number;
-  private _disableTimeoutId: number;
   private _axisDomain: SnapAxisDomain;
   private _minIndex: number;
   private _maxIndex: number;
@@ -30,6 +38,11 @@ export class RolodexDomain {
   private _unsubscribeOffset: Unsubscribe;
   private _blendMotion: BlendMotion<RolodexItem[]>;
   private _unsubscribeSize: Unsubscribe;
+  private _inOverviewMode: ObservableValue<boolean>;
+
+  get inOverviewModeBroadcast() {
+    return this._inOverviewMode;
+  }
 
   get itemsBroadcast() {
     return this._blendMotion.valueBroadcast;
@@ -48,9 +61,9 @@ export class RolodexDomain {
     this._axisDomain = axisDomain;
     this._minIndex = minIndex;
     this._maxIndex = maxIndex;
-    this._disableTimeoutId = 0;
     this._horizontalItems = this.createItems();
     this._rolodexItems = this.createItems();
+    this._inOverviewMode = new ObservableValue(false);
     this._blendMotion = new BlendMotion(
       this._horizontalItems,
       this._rolodexItems
@@ -70,7 +83,9 @@ export class RolodexDomain {
 
   initialize() {
     this._axisDomain.initialize(0);
+    this._axisDomain.disable();
     this._blendMotion.initialize();
+
   }
 
   private updateScrollConstraints(size) {
@@ -95,22 +110,22 @@ export class RolodexDomain {
         },
         scale: 1,
         veilOpacity: 1,
+        opacity: 1,
       });
     }
 
     return items;
   }
 
-  setToSelectedMode() {
-    this._blendMotion.transitionToA();
-    clearTimeout(this._disableTimeoutId);
-    this._disableTimeoutId = setTimeout(() => {
+  private setToSelectedMode() {
+    this._inOverviewMode.setValue(false);
+    this._blendMotion.transitionToA(()=>{
       this._axisDomain.disable();
-    }, 500) as unknown as number;
+    });
   }
 
   setToOverviewMode() {
-    clearTimeout(this._disableTimeoutId);
+    this._inOverviewMode.setValue(true);
     this._axisDomain.enable();
     this._blendMotion.transitionToB();
   }
@@ -134,11 +149,12 @@ export class RolodexDomain {
       const percentage = (offset % width) / width;
       const finalOffset = startOffset - percentage * width;
 
-      horizontalItems[i].index = Math.floor(itemIndex);
+      horizontalItems[i].index = itemIndex;
       horizontalItems[i].scale = 1;
       horizontalItems[i].transform.y = 0;
       horizontalItems[i].transform.x = finalOffset;
       horizontalItems[i].veilOpacity = 0;
+      horizontalItems[i].opacity = 1;
     }
   }
 
@@ -159,12 +175,16 @@ export class RolodexDomain {
       const transformedPercentage = easings.easeInQuint(percentage);
       const scale = 0.95 + transformedPercentage * 0.05;
       const position = transformedPercentage * adjustedWidth;
+      const veilOpacity = 1 - (0.5 + percentage * 0.5);
 
-      rolodexItems[i].index = Math.floor(itemIndex);
+      opacityAnimation.update(percentage);
+
+      rolodexItems[i].index = itemIndex;
       rolodexItems[i].scale = scale;
       rolodexItems[i].transform.y = 0;
       rolodexItems[i].transform.x = position;
-      rolodexItems[i].veilOpacity = 1 - scale;
+      rolodexItems[i].veilOpacity = veilOpacity;
+      rolodexItems[i].opacity = opacityAnimation.currentValues.opacity;
     }
   }
 

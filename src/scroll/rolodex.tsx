@@ -8,7 +8,7 @@ import { useHorizontalPanning } from "./use_horizontal_panning";
 
 const useStyles = createUseStyles(
   {
-    root: { position: "relative" },
+    root: { position: "relative", overflow: "hidden" },
     overviewButton: {
       width: "60px",
       height: "60px",
@@ -85,11 +85,23 @@ export const Rolodex = React.forwardRef(function ({
           top: "0%",
           padding: "30px",
           overflow: "hidden",
+          opacity: item.opacity,
+        };
+
+        const veilStyle: React.CSSProperties = {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+          backgroundColor: "black",
+          opacity: item.veilOpacity,
         };
 
         return (
           <div data-id={item.index} key={item.index} style={style}>
-            {item.index}
+            {Math.floor(item.index)}
+            <div style={veilStyle}></div>
           </div>
         );
       })}

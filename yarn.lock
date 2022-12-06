@@ -7127,10 +7127,10 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-motion-ux@^7.2.17:
-  version "7.2.17"
-  resolved "https://registry.yarnpkg.com/motion-ux/-/motion-ux-7.2.17.tgz#0b3ad7cb2b9171e118d93da3a933b8d6864ecbb1"
-  integrity sha512-/+tagtSXjsS41/9U2ujxtXSQ/xUVyPLkmVrIX8Q5FdXD9a8KiDsQCTlVBPeQW2J4tS5rHWfzcA0dRcsEiBUXmw==
+motion-ux@^7.2.21:
+  version "7.2.21"
+  resolved "https://registry.yarnpkg.com/motion-ux/-/motion-ux-7.2.21.tgz#18cc7f4764e4aa185aee42868c98d61687382a75"
+  integrity sha512-R8gvve8KaodhdgnKOX8QSvEJSHOJcX/NPqHe2TCfAXvF/XKFaFaLDQs/dCSp6TS5bZXbApdYOPCNVrOP2GICxg==
   dependencies:
     clarity-pattern-parser "3.0.8"
 

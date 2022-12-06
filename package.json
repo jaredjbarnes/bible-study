@@ -14,7 +14,7 @@
     "clsx": "^1.2.1",
     "ergo-hex": "0.0.7",
     "hammerjs": "^2.0.8",
-    "motion-ux": "^7.2.17",
+    "motion-ux": "^7.2.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-jss": "^10.9.2",
