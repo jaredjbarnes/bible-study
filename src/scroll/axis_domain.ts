@@ -198,6 +198,10 @@ export class AxisDomain implements Axis {
   }
 
   pointerEnd() {
+    if (!this.isScrolling) {
+      return;
+    }
+
     const offset = this._offset.getValue();
     const delta = Math.abs(this._deltaOffset);
     this._lastTime = Date.now();
