@@ -44,7 +44,7 @@ export function RolodexBaseline() {
       requestAnimationFrame,
       cancelAnimationFrame
     );
-
+    axis.min = 0;
     const domain = new RolodexDomain(axis);
 
     return domain;

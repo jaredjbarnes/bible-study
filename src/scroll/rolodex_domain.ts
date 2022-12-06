@@ -1,4 +1,8 @@
-import { ObservableValue, Unsubscribe } from "ergo-hex";
+import {
+  ObservableValue,
+  ReadonlyObservableValue,
+  Unsubscribe,
+} from "ergo-hex";
 import { createAnimation, easings } from "motion-ux";
 import { BlendMotion } from "./blend_motion";
 import { SnapAxisDomain } from "./snap_axis_domain";
@@ -40,7 +44,7 @@ export class RolodexDomain {
   private _unsubscribeSize: Unsubscribe;
   private _inOverviewMode: ObservableValue<boolean>;
 
-  get inOverviewModeBroadcast() {
+  get inOverviewModeBroadcast(): ReadonlyObservableValue<boolean> {
     return this._inOverviewMode;
   }
 
@@ -83,9 +87,8 @@ export class RolodexDomain {
 
   initialize() {
     this._axisDomain.initialize(0);
-    this._axisDomain.disable();
+    this._axisDomain.disablePointerInput();
     this._blendMotion.initialize();
-
   }
 
   private updateScrollConstraints(size) {
@@ -119,14 +122,13 @@ export class RolodexDomain {
 
   private setToSelectedMode() {
     this._inOverviewMode.setValue(false);
-    this._blendMotion.transitionToA(()=>{
-      this._axisDomain.disable();
-    });
+    this.axis.disablePointerInput();
+    this._blendMotion.transitionToA();
   }
 
   setToOverviewMode() {
     this._inOverviewMode.setValue(true);
-    this._axisDomain.enable();
+    this._axisDomain.enablePointerInput();
     this._blendMotion.transitionToB();
   }
 

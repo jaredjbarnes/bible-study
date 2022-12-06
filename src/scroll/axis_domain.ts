@@ -17,7 +17,8 @@ export class AxisDomain implements Axis {
   protected _size = new ObservableValue<number>(0);
   protected _motion: Motion<{ offset: number }>;
   protected _isScrolling = false;
-  protected _isDisabled = false;
+  protected _isEnabled = true;
+  protected _isPointerEnabled = true;
   protected _requestAnimationId = -1;
   protected _lastTime = Date.now();
   protected _lastOffset: number = 0;
@@ -109,7 +110,7 @@ export class AxisDomain implements Axis {
   }
 
   private updateFromAnimation(offset: number, newOffset: number) {
-    offset = this._isDisabled ? offset : newOffset;
+    offset = this._isEnabled ? newOffset : offset;
     this._deltaOffset = offset - this._lastOffset;
     this._deltaOffsetHistory.fill(this._deltaOffset);
     return offset;
@@ -137,6 +138,10 @@ export class AxisDomain implements Axis {
   }
 
   pointerStart(value: number) {
+    if (!this._isPointerEnabled) {
+      return;
+    }
+
     this.reset();
     this._lastTime = Date.now();
     this._lastOffset = value;
@@ -147,6 +152,11 @@ export class AxisDomain implements Axis {
   }
 
   pointerMove(value: number) {
+    if (!this._isPointerEnabled) {
+      this.pointerEnd();
+      return;
+    }
+
     const now = Date.now();
     const deltaTime = now - this._lastTime;
     const frames = Math.floor(deltaTime / 16);
@@ -162,7 +172,7 @@ export class AxisDomain implements Axis {
     this.updatePointerDelta(delta);
 
     this._offset.transformValue((o) => {
-      return this._isDisabled ? o : o + this._deltaOffset;
+      return this._isEnabled ? o + this._deltaOffset : o;
     });
 
     this.onScroll && this.onScroll(this);
@@ -219,7 +229,7 @@ export class AxisDomain implements Axis {
 
     if (shouldContinue && (sufficientSpeedToContinue || beyondBounds)) {
       this._offset.transformValue((o) => {
-        o = this._isDisabled ? o : o + this._deltaOffset;
+        o = this._isEnabled ? o + this._deltaOffset : o;
         return o;
       });
 
@@ -246,7 +256,7 @@ export class AxisDomain implements Axis {
     const delta = this._deltaOffset;
 
     if (offset > this._maxOffset) {
-      if (delta >= 0.90) {
+      if (delta >= 0.9) {
         this._deltaOffset *= 1 - (offset - this._maxOffset) / 200;
       } else {
         this.reset();
@@ -293,11 +303,10 @@ export class AxisDomain implements Axis {
   }
 
   private getValueWithinBounds(value: number) {
-    if (this._isDisabled) {
-      return this._offset.getValue();
+    if (this._isEnabled) {
+      return Math.min(this._maxOffset, Math.max(value, this._minOffset));
     }
-
-    return Math.min(this._maxOffset, Math.max(value, this._minOffset));
+    return this._offset.getValue();
   }
 
   stop() {
@@ -313,11 +322,19 @@ export class AxisDomain implements Axis {
   }
 
   disable() {
-    this._isDisabled = true;
+    this._isEnabled = false;
   }
 
   enable() {
-    this._isDisabled = false;
+    this._isEnabled = true;
+  }
+
+  disablePointerInput() {
+    this._isPointerEnabled = false;
+  }
+
+  enablePointerInput() {
+    this._isPointerEnabled = true;
   }
 
   scrollTo(value: number) {
