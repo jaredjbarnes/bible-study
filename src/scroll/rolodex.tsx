@@ -72,10 +72,10 @@ export const Rolodex = React.forwardRef(function ({
     <div ref={rootRef} style={style} className={clsx(className, classes.root)}>
       {items.map((item) => {
         const isLessThanMinIndex = Number(item.index) < domain.minIndex;
-        const isGreaterThanMaxindex = Number(item.index) > domain.maxIndex;
-        const dontRender = isLessThanMinIndex || isGreaterThanMaxindex;
+        const isGreaterThanMaxIndex = Number(item.index) > domain.maxIndex;
+        const doNotRender = isLessThanMinIndex || isGreaterThanMaxIndex;
 
-        if (dontRender) {
+        if (doNotRender) {
           return null;
         }
 

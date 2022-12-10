@@ -105,6 +105,7 @@ export class RolodexDomain {
     this._unsubscribeSize = this._axisDomain.sizeBroadcast.onChange((size) => {
       this.updateScrollConstraints(size);
       this._axisDomain.setSnapInterval(size / MULTIPLIER);
+      this.updateItems();
     });
 
     this.updateItems();
