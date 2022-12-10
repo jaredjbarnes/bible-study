@@ -45,7 +45,7 @@ export function RolodexBaseline() {
       cancelAnimationFrame
     );
     axis.min = 0;
-    const domain = new RolodexDomain(axis);
+    const domain = new RolodexDomain(axis, 0, 50);
 
     return domain;
   });

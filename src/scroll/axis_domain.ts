@@ -110,7 +110,7 @@ export class AxisDomain implements Axis {
   }
 
   private updateFromAnimation(offset: number, newOffset: number) {
-    offset = this._isEnabled ? newOffset : offset;
+    offset = newOffset;
     this._deltaOffset = offset - this._lastOffset;
     this._deltaOffsetHistory.fill(this._deltaOffset);
     return offset;
@@ -138,10 +138,6 @@ export class AxisDomain implements Axis {
   }
 
   pointerStart(value: number) {
-    if (!this._isPointerEnabled) {
-      return;
-    }
-
     this.reset();
     this._lastTime = Date.now();
     this._lastOffset = value;
@@ -152,9 +148,14 @@ export class AxisDomain implements Axis {
   }
 
   pointerMove(value: number) {
-    if (!this._isPointerEnabled) {
-      this.pointerEnd();
-      return;
+    if (!this._isEnabled) {
+      this.reset();
+      this._lastTime = Date.now();
+      this._lastOffset = value;
+      this._startOffset = value;
+      this._deltaOffset = 0;
+      this._deltaOffsetHistory.fill(0);
+      this._isScrolling = false;
     }
 
     const now = Date.now();
@@ -233,7 +234,7 @@ export class AxisDomain implements Axis {
 
     if (shouldContinue && (sufficientSpeedToContinue || beyondBounds)) {
       this._offset.transformValue((o) => {
-        o = this._isEnabled ? o + this._deltaOffset : o;
+        o = o + this._deltaOffset;
         return o;
       });
 
@@ -306,11 +307,8 @@ export class AxisDomain implements Axis {
     this._motion.segueTo(createAnimation({ offset: value }), duration, easing);
   }
 
-  private getValueWithinBounds(value: number) {
-    if (this._isEnabled) {
-      return Math.min(this._maxOffset, Math.max(value, this._minOffset));
-    }
-    return this._offset.getValue();
+  protected getValueWithinBounds(value: number) {
+    return Math.min(this._maxOffset, Math.max(value, this._minOffset));
   }
 
   stop() {
@@ -331,14 +329,6 @@ export class AxisDomain implements Axis {
 
   enable() {
     this._isEnabled = true;
-  }
-
-  disablePointerInput() {
-    this._isPointerEnabled = false;
-  }
-
-  enablePointerInput() {
-    this._isPointerEnabled = true;
   }
 
   scrollTo(value: number) {

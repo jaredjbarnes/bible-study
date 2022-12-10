@@ -57,6 +57,30 @@ export class RolodexDomain {
     return this._axisDomain;
   }
 
+  get minIndex() {
+    return this._minIndex;
+  }
+
+  set minIndex(value: number) {
+    const size = this.axis.size;
+    if (this._minIndex != -Infinity) {
+      this._minIndex = value;
+      this._axisDomain.min = this._minIndex * size;
+    }
+  }
+
+  get maxIndex() {
+    return this._maxIndex;
+  }
+
+  set maxIndex(value: number) {
+    const size = this.axis.size;
+    if (this._maxIndex != -Infinity) {
+      this._maxIndex = value;
+      this._axisDomain.max = this._maxIndex * size;
+    }
+  }
+
   constructor(
     axisDomain: SnapAxisDomain,
     minIndex = -Infinity,
@@ -64,8 +88,8 @@ export class RolodexDomain {
   ) {
     this._amount = 5;
     this._axisDomain = axisDomain;
-    this._minIndex = minIndex;
-    this._maxIndex = maxIndex;
+    this.minIndex = minIndex;
+    this.maxIndex = maxIndex;
     this._horizontalItems = this.createItems();
     this._rolodexItems = this.createItems();
     this._inOverviewMode = new ObservableValue(false);
@@ -87,18 +111,18 @@ export class RolodexDomain {
   }
 
   initialize() {
-    this._axisDomain.initialize(0);
-    this._axisDomain.disablePointerInput();
+    this.axis.disable();
+    this.axis.initialize(0);
     this._blendMotion.initialize();
   }
 
   private updateScrollConstraints(size) {
     if (this._minIndex != -Infinity) {
-      this._axisDomain.min = this._minIndex * size;
+      this._axisDomain.min = (this._minIndex * size) / MULTIPLIER;
     }
 
     if (this._maxIndex != Infinity) {
-      this._axisDomain.max = this._maxIndex * size;
+      this._axisDomain.max = (this._maxIndex * size) / MULTIPLIER;
     }
   }
 
@@ -124,13 +148,13 @@ export class RolodexDomain {
 
   private setToSelectedMode() {
     this._inOverviewMode.setValue(false);
-    this.axis.disablePointerInput();
+    this.axis.disable();
     this._blendMotion.transitionToA();
   }
 
   setToOverviewMode() {
     this._inOverviewMode.setValue(true);
-    this._axisDomain.enablePointerInput();
+    this.axis.enable();
     this._blendMotion.transitionToB();
   }
 
@@ -183,13 +207,14 @@ export class RolodexDomain {
       const veilOpacity = 1 - (0.5 + percentage * 0.5);
 
       opacityAnimation.update(percentage);
+      const opacity = opacityAnimation.currentValues.opacity;
 
       rolodexItems[i].index = String(itemIndex);
       rolodexItems[i].scale = scale;
       rolodexItems[i].transform.y = 0;
       rolodexItems[i].transform.x = position;
       rolodexItems[i].veilOpacity = veilOpacity;
-      rolodexItems[i].opacity = opacityAnimation.currentValues.opacity;
+      rolodexItems[i].opacity = opacity;
       rolodexItems[i].borderRadius = 25;
     }
   }

@@ -9,8 +9,7 @@ export class SnapAxisDomain extends AxisDomain {
     snapInterval?: number
   ) {
     super(requestAnimationFrame, cancelAnimationFrame);
-    if (snapInterval == null){
-
+    if (snapInterval == null) {
     } else {
       this._snapInterval = Math.max(snapInterval, 0);
     }
@@ -38,11 +37,9 @@ export class SnapAxisDomain extends AxisDomain {
     const offset = this._offset.getValue();
     const delta = this._deltaOffset;
     const distance = this.deriveDistance(delta);
-    const value = this.round(offset + distance);
+    const value = this.getValueWithinBounds(this.round(offset + distance));
 
-    if (value <= this.maxOffset && value >= this.minOffset){
-      this.animateTo(value);
-    }
+    this.animateTo(value);
   }
 
   private deriveDistance(delta: number) {
