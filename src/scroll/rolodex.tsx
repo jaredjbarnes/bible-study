@@ -80,7 +80,7 @@ export const Rolodex = React.forwardRef(function ({
           backgroundColor: "red",
           boxSizing: "border-box",
           border: "3px solid black",
-          borderRadius: "25px",
+          borderRadius: `${item.borderRadius}px`,
           left: "0px",
           top: "0%",
           padding: "30px",
@@ -100,7 +100,7 @@ export const Rolodex = React.forwardRef(function ({
 
         return (
           <div data-id={item.index} key={item.index} style={style}>
-            {Math.floor(item.index)}
+            {item.index}
             <div style={veilStyle}></div>
           </div>
         );

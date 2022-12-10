@@ -21,7 +21,7 @@ export class BlendMotion<T> {
     return this._value.getValue();
   }
 
-  constructor(a: T, b: T) {
+  constructor(from: T, to: T) {
     this._motion = new Motion(({ currentValues }) => {
       this._transitionValue = currentValues.value;
       this.render();
@@ -30,13 +30,24 @@ export class BlendMotion<T> {
     this._animation = new Animation("blended-motion", [
       new Keyframe({
         property: "value",
-        from: a,
-        to: b,
+        from: from,
+        to: to,
       }),
     ]);
 
     this._transitionValue = 0;
     this._value = new ObservableValue(this._animation.currentValues.value);
+  }
+
+  updateKeyframe(from: T, to: T) {
+    this._animation.keyframes = [
+      new Keyframe({
+        property: "value",
+        from: from,
+        to: to,
+      }),
+    ];
+    this.render();
   }
 
   private render() {

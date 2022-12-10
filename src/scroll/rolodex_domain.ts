@@ -8,7 +8,7 @@ import { BlendMotion } from "./blend_motion";
 import { SnapAxisDomain } from "./snap_axis_domain";
 
 export interface RolodexItem {
-  index: number;
+  index: string;
   transform: {
     x: number;
     y: number;
@@ -16,6 +16,7 @@ export interface RolodexItem {
   scale: number;
   veilOpacity: number;
   opacity: number;
+  borderRadius: number;
 }
 
 const opacityAnimation = createAnimation({
@@ -106,7 +107,7 @@ export class RolodexDomain {
 
     for (let x = 0; x <= this._amount; x++) {
       items.push({
-        index: x,
+        index: String(x),
         transform: {
           x: 0,
           y: 0,
@@ -114,6 +115,7 @@ export class RolodexDomain {
         scale: 1,
         veilOpacity: 1,
         opacity: 1,
+        borderRadius: 0,
       });
     }
 
@@ -151,12 +153,13 @@ export class RolodexDomain {
       const percentage = (offset % width) / width;
       const finalOffset = startOffset - percentage * width;
 
-      horizontalItems[i].index = itemIndex;
+      horizontalItems[i].index = String(itemIndex);
       horizontalItems[i].scale = 1;
       horizontalItems[i].transform.y = 0;
       horizontalItems[i].transform.x = finalOffset;
       horizontalItems[i].veilOpacity = 0;
       horizontalItems[i].opacity = 1;
+      horizontalItems[i].borderRadius = 0;
     }
   }
 
@@ -181,12 +184,13 @@ export class RolodexDomain {
 
       opacityAnimation.update(percentage);
 
-      rolodexItems[i].index = itemIndex;
+      rolodexItems[i].index = String(itemIndex);
       rolodexItems[i].scale = scale;
       rolodexItems[i].transform.y = 0;
       rolodexItems[i].transform.x = position;
       rolodexItems[i].veilOpacity = veilOpacity;
       rolodexItems[i].opacity = opacityAnimation.currentValues.opacity;
+      rolodexItems[i].borderRadius = 25;
     }
   }
 
