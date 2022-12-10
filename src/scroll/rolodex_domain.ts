@@ -206,9 +206,9 @@ export class RolodexDomain {
       const scale = 0.95 + transformedPercentage * 0.05;
       const position = transformedPercentage * adjustedWidth;
       const veilOpacity = 1 - (0.5 + percentage * 0.5);
-
+      const isLastItem = this.maxIndex == itemIndex;
       opacityAnimation.update(percentage);
-      const opacity = opacityAnimation.currentValues.opacity;
+      const opacity = isLastItem ? 1 : opacityAnimation.currentValues.opacity;
 
       rolodexItems[i].index = String(itemIndex);
       rolodexItems[i].scale = scale;

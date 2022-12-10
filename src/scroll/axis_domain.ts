@@ -299,11 +299,10 @@ export class AxisDomain implements Axis {
       },
     });
 
-    this.reset();
-    this._motion.inject(animation);
     value = this.getValueWithinBounds(value);
 
-    // Need to constrain if disabled and well as if snapped.
+    this.reset();
+    this._motion.inject(animation);
     this._motion.segueTo(createAnimation({ offset: value }), duration, easing);
   }
 
