@@ -1,20 +1,10 @@
-import React, {
-  useRef,
-  useEffect,
-  useLayoutEffect,
-  useCallback,
-  useState,
-} from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { useAsyncValue } from "ergo-hex";
 import { createUseStyles } from "react-jss";
 import { RolodexDomain } from "./rolodex_domain";
 import clsx from "clsx";
 import { useHorizontalResizing } from "./use_horizontal_resizing";
 import { useHorizontalPanning } from "./use_horizontal_panning";
-import { SnapAxisDomain } from "./snap_axis_domain";
-import { useVerticalResizing } from "./use_vertical_resizing";
-import { RolodexItemRemover } from "./rolodex_item_remover";
-import { useLockPanning } from "./use_lock_panning";
 
 const useStyles = createUseStyles(
   {
@@ -49,13 +39,10 @@ export const Rolodex = React.forwardRef(function ({
   const classes = useStyles();
   const items = useAsyncValue(domain.itemsBroadcast);
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const [removeIndex, setRemoveIndex] = useState(-1);
-  const [removeAxis, setRemoveAxis] = useState(() => {
-    return new SnapAxisDomain(requestAnimationFrame, cancelAnimationFrame);
-  });
 
   const onTap = useCallback(
     (e) => {
+      console.log("tapped");
       const element = e.target as HTMLElement | null;
 
       if (element != null) {
@@ -71,29 +58,9 @@ export const Rolodex = React.forwardRef(function ({
     [domain]
   );
 
-  const onStart = useCallback((event: PointerEvent) => {
-    const element = event.target as HTMLElement;
-
-    if (element != null) {
-      const itemElement = element.closest("[data-id]");
-
-      if (itemElement != null) {
-        const index = Number(itemElement.getAttribute("data-id"));
-        setRemoveIndex(index);
-      }
-    }
-  }, []);
-
-  const onEnd = useCallback((event: PointerEvent) => {
-    setRemoveAxis(
-      new SnapAxisDomain(requestAnimationFrame, cancelAnimationFrame)
-    );
-  }, []);
-
   useAsyncValue(domain.axis.sizeBroadcast);
   useHorizontalResizing(rootRef, domain.axis);
-  useVerticalResizing(rootRef, removeAxis);
-  useLockPanning(rootRef, domain.axis, removeAxis, onTap, onStart, onEnd);
+  useHorizontalPanning(rootRef, domain.axis, onTap);
 
   useEffect(() => {
     domain.initialize();
@@ -102,19 +69,6 @@ export const Rolodex = React.forwardRef(function ({
   const setToOverviewMode = useCallback(() => {
     domain.setToOverviewMode();
   }, [domain]);
-
-  useLayoutEffect(() => {
-    removeAxis.onScrollStart = () => {
-      const itemRemover = new RolodexItemRemover(
-        removeIndex,
-        removeAxis.size / 2,
-        removeAxis.size,
-        removeAxis
-      );
-
-      domain.addItemRemover(itemRemover);
-    };
-  }, [removeAxis, domain]);
 
   return (
     <div ref={rootRef} style={style} className={clsx(className, classes.root)}>
