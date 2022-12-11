@@ -5,6 +5,8 @@ import {
 } from "ergo-hex";
 import { createAnimation, easings } from "motion-ux";
 import { BlendMotion } from "./blend_motion";
+import { RenderThrottle } from "./render_throttle";
+import { RolodexItemRemover } from "./rolodex_item_remover";
 import { SnapAxisDomain } from "./snap_axis_domain";
 
 export interface RolodexItem {
@@ -44,6 +46,8 @@ export class RolodexDomain {
   private _blendMotion: BlendMotion<RolodexItem[]>;
   private _unsubscribeSize: Unsubscribe;
   private _inOverviewMode: ObservableValue<boolean>;
+  private _activeRemovers: RolodexItemRemover[];
+  private _renderThrottle: RenderThrottle;
 
   get inOverviewModeBroadcast(): ReadonlyObservableValue<boolean> {
     return this._inOverviewMode;
@@ -93,6 +97,11 @@ export class RolodexDomain {
     this._horizontalItems = this.createItems();
     this._rolodexItems = this.createItems();
     this._inOverviewMode = new ObservableValue(false);
+    this._activeRemovers = [];
+    this._renderThrottle = new RenderThrottle(() => {
+      console.log("HEY");
+      this.updateItems();
+    });
     this._blendMotion = new BlendMotion(
       this._horizontalItems,
       this._rolodexItems
@@ -166,21 +175,56 @@ export class RolodexDomain {
     this.setToSelectedMode();
   }
 
+  addItemRemover(itemRemover: RolodexItemRemover) {
+    this._activeRemovers.push(itemRemover);
+
+    const unsubscribeToAxis = itemRemover.axis.offsetBroadcast.onChange(() => {
+      this._renderThrottle.requestUpdate();
+    });
+
+    const unsubscribeToYOffset = itemRemover.offsetBroadcast.onChange(() => {
+      this._renderThrottle.requestUpdate();
+    });
+
+    return itemRemover
+      .process()
+      .catch(() => {
+        const index = this._activeRemovers.indexOf(itemRemover);
+        if (index > -1) {
+          this._activeRemovers.splice(index, 1);
+        }
+      })
+      .finally(() => {
+        unsubscribeToAxis();
+        unsubscribeToYOffset();
+      });
+  }
+
   private updateHorizontalItems() {
     const horizontalItems = this._horizontalItems;
     const width = this._width;
     const startIndex = this._startIndex;
     const offset = this._offset;
+    const itemRemoverMap = this.createRemoverMap();
 
     for (let i = 0; i <= this._amount; i++) {
       const itemIndex = startIndex + i;
       const startOffset = (i - 3) * width;
       const percentage = (offset % width) / width;
-      const finalOffset = startOffset - percentage * width;
+      const finalOffset =
+        startOffset -
+        percentage * width +
+        this.getRemovalOffsetForIndex(itemIndex);
+      const itemRemover = itemRemoverMap[itemIndex];
+      let yOffset = 0;
+
+      if (itemRemover != null) {
+        yOffset = itemRemover.axis.offset;
+      }
 
       horizontalItems[i].index = String(itemIndex);
       horizontalItems[i].scale = 1;
-      horizontalItems[i].transform.y = 0;
+      horizontalItems[i].transform.y = yOffset;
       horizontalItems[i].transform.x = finalOffset;
       horizontalItems[i].veilOpacity = 0;
       horizontalItems[i].opacity = 1;
@@ -196,10 +240,12 @@ export class RolodexDomain {
     const adjustedWidth = width - width * 0.15;
     const rolodexItems = this._rolodexItems;
     const transformWidth = amount * width;
+    const itemRemoverMap = this.createRemoverMap();
 
     for (let i = 0; i <= amount; i++) {
       const itemIndex = startIndex + i;
-      const itemPosition = itemIndex * width;
+      const itemPosition =
+        itemIndex * width + this.getRemovalOffsetForIndex(itemIndex);
       const percentage =
         (transformWidth - (start - itemPosition)) / transformWidth;
       const transformedPercentage = easings.easeInQuint(percentage);
@@ -210,14 +256,48 @@ export class RolodexDomain {
       opacityAnimation.update(percentage);
       const opacity = isLastItem ? 1 : opacityAnimation.currentValues.opacity;
 
+      const itemRemover = itemRemoverMap[itemIndex];
+      let yOffset = 0;
+
+      if (itemRemover != null) {
+        yOffset = itemRemover.axis.offset;
+      }
+
       rolodexItems[i].index = String(itemIndex);
       rolodexItems[i].scale = scale;
-      rolodexItems[i].transform.y = 0;
+      rolodexItems[i].transform.y = yOffset;
       rolodexItems[i].transform.x = position;
       rolodexItems[i].veilOpacity = veilOpacity;
       rolodexItems[i].opacity = opacity;
       rolodexItems[i].borderRadius = 25;
     }
+  }
+
+  private createRemoverMap() {
+    const itemRemoverMap: { [key: string]: RolodexItemRemover } = {};
+    const activeRemovers = this._activeRemovers;
+
+    for (let i = 0; i < activeRemovers.length; i++) {
+      itemRemoverMap[activeRemovers[i].index] = activeRemovers[i];
+    }
+
+    return itemRemoverMap;
+  }
+
+  private getRemovalOffsetForIndex(index: number) {
+    let total = 0;
+    const removers = this._activeRemovers;
+
+    for (let i = 0; i < removers.length; i++) {
+      const remover = removers[i];
+      const removerIndex = remover.index;
+
+      if (removerIndex < index) {
+        total += remover.offset;
+      }
+    }
+
+    return total;
   }
 
   private updateItems() {

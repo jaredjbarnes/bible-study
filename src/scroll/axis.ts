@@ -7,6 +7,7 @@ export interface Axis {
   sizeBroadcast: ReadonlyObservableValue<number>;
   size: number;
   velocity: number;
+  offset: number;
   start: number;
   end: number;
   isScrolling: boolean;

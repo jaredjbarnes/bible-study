@@ -8,11 +8,13 @@ export function useLockPanning(
   divRef: React.RefObject<HTMLDivElement | null>,
   xAxis: Axis,
   yAxis: Axis,
-  onTap?: (event: PointerEvent) => void
+  onTap?: (event: PointerEvent) => void,
+  onStart?: (event: PointerEvent) => void,
+  onEnd?: (event: PointerEvent) => void
 ) {
   useLayoutEffect(() => {
     const stage = divRef.current;
-    
+
     if (stage != null) {
       let startX = 0;
       let startY = 0;
@@ -40,6 +42,7 @@ export function useLockPanning(
       manager.on("panstart", (e) => {
         startX = e.center.x;
         startY = e.center.y;
+        onStart && onStart(e.srcEvent);
       });
 
       manager.on("panmove", (e) => {
@@ -54,10 +57,12 @@ export function useLockPanning(
           const isFarEnough = horizontalMovement > 5 || verticalMovement > 5;
 
           if (isFarEnough && isMoreHorizontal) {
+            hasStarted = true;
             axisName = "x";
             activeAxis = xAxis;
             xAxis.pointerStart(e.center.x);
           } else if (isFarEnough && isMoreVertical) {
+            hasStarted = true;
             axisName = "y";
             activeAxis = yAxis;
             yAxis.pointerStart(e.center.y);
@@ -65,14 +70,16 @@ export function useLockPanning(
         }
       });
 
-      manager.on("panend", () => {
+      manager.on("panend", (e) => {
         hasStarted = false;
         activeAxis.pointerEnd();
+        onEnd && onEnd(e.srcEvent);
       });
 
       manager.on("pancancel", (e) => {
         hasStarted = false;
         activeAxis.pointerEnd();
+        onEnd && onEnd(e.srcEvent);
       });
 
       return () => {
@@ -80,5 +87,5 @@ export function useLockPanning(
         manager.destroy();
       };
     }
-  }, [xAxis, yAxis, onTap]);
+  }, [xAxis, yAxis, onTap, onStart, onEnd]);
 }

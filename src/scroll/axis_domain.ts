@@ -36,6 +36,10 @@ export class AxisDomain implements Axis {
     return this._size;
   }
 
+  get offset() {
+    return this._offset.getValue();
+  }
+
   get start() {
     return -this._offset.getValue();
   }
@@ -123,7 +127,6 @@ export class AxisDomain implements Axis {
   reset() {
     this.cancelMomentum();
     this._motion.stop();
-    this.processScrollEnd();
     this._lastTime = Date.now();
     this._lastOffset = this._offset.getValue();
     this._deltaOffset = 0;
@@ -145,6 +148,8 @@ export class AxisDomain implements Axis {
     this._deltaOffset = 0;
     this._deltaOffsetHistory.fill(0);
     this._isScrolling = true;
+
+    this.onScrollStart && this.onScrollStart(this);
   }
 
   pointerMove(value: number) {
@@ -213,18 +218,23 @@ export class AxisDomain implements Axis {
       });
     } else {
       if (offset < this._minOffset) {
-        this.animateTo(this._minOffset, 800, customBoundsEasing);
+        this.animateTo(this._minOffset, 800, customBoundsEasing, () => {
+          this.processScrollEnd();
+        });
       } else if (offset > this.maxOffset) {
-        this.animateTo(this._maxOffset, 800, customBoundsEasing);
+        this.animateTo(this._maxOffset, 800, customBoundsEasing, () => {
+          this.processScrollEnd();
+        });
       } else {
         this.stop();
+        this.processScrollEnd();
       }
     }
   }
 
   private finishMomentum() {
     this.updateDelta();
-    const shouldContinue = this.springIntoBounds();
+    const isSpringingBackIntoBounds = this.springIntoBounds();
     this.fillDeltaHistory();
 
     const offset = this._offset.getValue();
@@ -232,7 +242,7 @@ export class AxisDomain implements Axis {
     const sufficientSpeedToContinue = Math.abs(this._deltaOffset) > 0.1;
     const beyondBounds = offset < this.minOffset || offset > this.maxOffset;
 
-    if (shouldContinue && (sufficientSpeedToContinue || beyondBounds)) {
+    if (!isSpringingBackIntoBounds && (sufficientSpeedToContinue || beyondBounds)) {
       this._offset.transformValue((o) => {
         o = o + this._deltaOffset;
         return o;
@@ -243,6 +253,10 @@ export class AxisDomain implements Axis {
       this._requestAnimationId = requestAnimationFrame(() => {
         this.finishMomentum();
       });
+    }
+
+    if (!sufficientSpeedToContinue && !beyondBounds) {
+      this.processScrollEnd();
     }
   }
 
@@ -265,20 +279,24 @@ export class AxisDomain implements Axis {
         this._deltaOffset *= 1 - (offset - this._maxOffset) / 200;
       } else {
         this.reset();
-        this.animateTo(this._maxOffset, 800, customBoundsEasing);
-        return false;
+        this.animateTo(this._maxOffset, 800, customBoundsEasing, () => {
+          this.processScrollEnd();
+        });
+        return true;
       }
     } else if (offset < this.minOffset) {
       if (delta <= -0.9) {
         this._deltaOffset *= 1 - (this.minOffset - offset) / 200;
       } else {
         this.reset();
-        this.animateTo(this._minOffset, 800, customBoundsEasing);
-        return false;
+        this.animateTo(this._minOffset, 800, customBoundsEasing, () => {
+          this.processScrollEnd();
+        });
+        return true;
       }
     }
 
-    return true;
+    return false;
   }
 
   private fillDeltaHistory() {
@@ -288,8 +306,13 @@ export class AxisDomain implements Axis {
   animateTo(
     value: number,
     duration = 2000,
-    easing: EasingFunction = easings.easeOutQuint
+    easing: EasingFunction = easings.easeOutQuint,
+    onComplete?: () => void
   ) {
+    if (!this.isScrolling) {
+      this.onScrollStart && this.onScrollStart(this);
+    }
+
     const offset = this._offset.getValue();
     const delta = this._deltaOffset;
     const animation = createAnimation({
@@ -303,7 +326,15 @@ export class AxisDomain implements Axis {
 
     this.reset();
     this._motion.inject(animation);
-    this._motion.segueTo(createAnimation({ offset: value }), duration, easing);
+    this._motion.segueTo(
+      createAnimation({ offset: value }),
+      duration,
+      easing,
+      () => {
+        this.onScrollEnd && this.onScrollEnd(this);
+        onComplete && onComplete();
+      }
+    );
   }
 
   protected getValueWithinBounds(value: number) {
@@ -311,6 +342,9 @@ export class AxisDomain implements Axis {
   }
 
   stop() {
+    if (this._isScrolling) {
+      this.onScrollEnd && this.onScrollEnd(this);
+    }
     this.reset();
   }
 
@@ -332,6 +366,9 @@ export class AxisDomain implements Axis {
 
   scrollTo(value: number) {
     this.stop();
+    this.onScrollStart && this.onScrollStart(this);
     this._offset.setValue(value);
+    this.onScroll && this.onScroll(this);
+    this.onScrollEnd && this.onScrollEnd(this);
   }
 }
