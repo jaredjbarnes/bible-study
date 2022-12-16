@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Rolodex } from "./rolodex";
-import { RolodexDomain } from "./rolodex_domain";
+import { Rolodex } from "./rolodex/rolodex";
+import { RolodexDomain } from "./rolodex/rolodex_domain";
 import { SnapAxisDomain } from "./snap_axis_domain";
 import { StackList } from "./stack_list";
 

@@ -20,7 +20,7 @@ export class AxisDomain implements Axis {
   protected _isEnabled = true;
   protected _isPointerEnabled = true;
   protected _requestAnimationId = -1;
-  protected _lastTime = Date.now();
+  protected _lastPointerEventTime = Date.now();
   protected _lastOffset: number = 0;
   protected _startOffset: number = 0;
   protected _deltaOffset: number = 0;
@@ -146,7 +146,7 @@ export class AxisDomain implements Axis {
   reset() {
     this.cancelMomentum();
     this._motion.stop();
-    this._lastTime = Date.now();
+    this._lastPointerEventTime = Date.now();
     this._lastOffset = this._offset.getValue();
     this._deltaOffset = 0;
     this._deltaOffsetHistory.fill(0);
@@ -154,7 +154,7 @@ export class AxisDomain implements Axis {
 
   pointerStart(value: number) {
     this.reset();
-    this._lastTime = Date.now();
+    this._lastPointerEventTime = Date.now();
     this._lastOffset = value;
     this._startOffset = value;
     this._deltaOffset = 0;
@@ -165,7 +165,7 @@ export class AxisDomain implements Axis {
   pointerMove(value: number) {
     if (!this._isEnabled) {
       this.reset();
-      this._lastTime = Date.now();
+      this._lastPointerEventTime = Date.now();
       this._lastOffset = value;
       this._startOffset = value;
       this._deltaOffset = 0;
@@ -174,7 +174,7 @@ export class AxisDomain implements Axis {
     }
 
     const now = Date.now();
-    const deltaTime = now - this._lastTime;
+    const deltaTime = now - this._lastPointerEventTime;
     const frames = Math.floor(deltaTime / 16);
     const delta = (value - this._lastOffset) / frames;
 
@@ -182,7 +182,7 @@ export class AxisDomain implements Axis {
       return false;
     }
 
-    this._lastTime = now;
+    this._lastPointerEventTime = now;
     this._lastOffset = value;
 
     this.updatePointerDelta(delta);
@@ -196,23 +196,6 @@ export class AxisDomain implements Axis {
     return true;
   }
 
-  private updatePointerDelta(delta: number) {
-    let total = 0;
-
-    for (let i = 0; i < 3; i++) {
-      if (i < 2) {
-        this._deltaOffsetHistory[i] = this._deltaOffsetHistory[i + 1];
-      } else {
-        this._deltaOffsetHistory[i] = delta;
-      }
-
-      total += this._deltaOffsetHistory[i];
-    }
-
-    const averageX = total / 3;
-    this._deltaOffset = averageX;
-  }
-
   pointerEnd() {
     if (!this.isScrolling) {
       return;
@@ -220,7 +203,7 @@ export class AxisDomain implements Axis {
 
     const offset = this._offset.getValue();
     const delta = Math.abs(this._deltaOffset);
-    this._lastTime = Date.now();
+    this._lastPointerEventTime = Date.now();
 
     if (delta > 3) {
       this._requestAnimationId = requestAnimationFrame(() => {
@@ -239,6 +222,23 @@ export class AxisDomain implements Axis {
         this.stop();
       }
     }
+  }
+
+  private updatePointerDelta(delta: number) {
+    let total = 0;
+
+    for (let i = 0; i < 3; i++) {
+      if (i < 2) {
+        this._deltaOffsetHistory[i] = this._deltaOffsetHistory[i + 1];
+      } else {
+        this._deltaOffsetHistory[i] = delta;
+      }
+
+      total += this._deltaOffsetHistory[i];
+    }
+
+    const averageX = total / 3;
+    this._deltaOffset = averageX;
   }
 
   private finishMomentum() {
@@ -321,7 +321,6 @@ export class AxisDomain implements Axis {
     easing: EasingFunction = easings.easeOutQuint,
     onComplete?: () => void
   ) {
-
     this.processScrollStart();
 
     const offset = this._offset.getValue();

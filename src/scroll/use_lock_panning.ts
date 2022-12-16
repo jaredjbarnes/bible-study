@@ -34,9 +34,7 @@ export function useLockPanning(
       }
 
       manager.on("tap", (e) => {
-        if (!xAxis.isScrolling && !yAxis.isScrolling) {
-          onTap && onTap(e.srcEvent);
-        }
+        onTap && onTap(e.srcEvent);
       });
 
       manager.on("panstart", (e) => {

@@ -5,7 +5,8 @@ import {
 } from "ergo-hex";
 import { createAnimation, easings } from "motion-ux";
 import { BlendMotion } from "./blend_motion";
-import { SnapAxisDomain } from "./snap_axis_domain";
+import { SnapAxisDomain } from "../snap_axis_domain";
+import { ItemCollapse } from "./item_collapse";
 
 export interface RolodexItem {
   index: string;
@@ -27,10 +28,10 @@ const opacityAnimation = createAnimation({
     to: 1,
   },
 });
-const MULTIPLIER = 2.25;
+const PAN_MULTIPLIER = 2.25;
 
 export class RolodexDomain {
-  private _amount: number;
+  private _visibleAmount: number;
   private _width: number;
   private _offset: number;
   private _startIndex: number;
@@ -41,9 +42,10 @@ export class RolodexDomain {
   private _horizontalItems: RolodexItem[];
   private _rolodexItems: RolodexItem[];
   private _unsubscribeOffset: Unsubscribe;
-  private _blendMotion: BlendMotion<RolodexItem[]>;
+  private _blendMotion: BlendMotion<RolodexItem>;
   private _unsubscribeSize: Unsubscribe;
   private _inOverviewMode: ObservableValue<boolean>;
+  private collapsingItems: ItemCollapse[];
 
   get inOverviewModeBroadcast(): ReadonlyObservableValue<boolean> {
     return this._inOverviewMode;
@@ -86,14 +88,14 @@ export class RolodexDomain {
     minIndex = -Infinity,
     maxIndex = Infinity
   ) {
-    this._amount = 5;
+    this._visibleAmount = 5;
     this._axisDomain = axisDomain;
     this.minIndex = minIndex;
     this.maxIndex = maxIndex;
     this._horizontalItems = this.createItems();
     this._rolodexItems = this.createItems();
     this._inOverviewMode = new ObservableValue(false);
-    this._blendMotion = new BlendMotion(
+    this._blendMotion = new BlendMotion<RolodexItem>(
       this._horizontalItems,
       this._rolodexItems
     );
@@ -104,7 +106,7 @@ export class RolodexDomain {
 
     this._unsubscribeSize = this._axisDomain.sizeBroadcast.onChange((size) => {
       this.updateScrollConstraints(size);
-      this._axisDomain.setSnapInterval(size / MULTIPLIER);
+      this._axisDomain.setSnapInterval(size / PAN_MULTIPLIER);
       this.updateItems();
     });
 
@@ -131,18 +133,18 @@ export class RolodexDomain {
 
   private updateScrollConstraints(size) {
     if (this._minIndex != -Infinity) {
-      this._axisDomain.min = (this._minIndex * size) / MULTIPLIER;
+      this._axisDomain.min = (this._minIndex * size) / PAN_MULTIPLIER;
     }
 
     if (this._maxIndex != Infinity) {
-      this._axisDomain.max = (this._maxIndex * size) / MULTIPLIER;
+      this._axisDomain.max = (this._maxIndex * size) / PAN_MULTIPLIER;
     }
   }
 
   private createItems() {
     const items: RolodexItem[] = [];
 
-    for (let x = 0; x <= this._amount; x++) {
+    for (let x = 0; x <= this._visibleAmount; x++) {
       items.push({
         index: String(x),
         transform: {
@@ -165,6 +167,23 @@ export class RolodexDomain {
     this._blendMotion.transitionToA();
   }
 
+  getItemCollapseForIndex(index: number) {
+    const itemCollapse = new ItemCollapse(index, 300, this.axis.size);
+    itemCollapse.offsetBroadcast.onChange(()=>{this.updateItems()});
+
+    this.collapsingItems.push(itemCollapse);
+    return itemCollapse;
+  }
+
+  private removeItemCollapse(itemCollapse: ItemCollapse){
+    const index = this.collapsingItems.indexOf(itemCollapse);
+
+    if (index > -1){
+      this.collapsingItems.splice(index, 1);
+      itemCollapse.dispose();
+    }
+  }
+
   setToOverviewMode() {
     this._inOverviewMode.setValue(true);
     this.axis.enable();
@@ -172,7 +191,7 @@ export class RolodexDomain {
   }
 
   selectItem(index: number) {
-    const position = (index * this._width) / MULTIPLIER;
+    const position = (index * this._width) / PAN_MULTIPLIER;
     this._axisDomain.stop();
     this._axisDomain.animateTo(-position, 500);
     this.setToSelectedMode();
@@ -184,7 +203,7 @@ export class RolodexDomain {
     const startIndex = this._startIndex;
     const offset = this._offset;
 
-    for (let i = 0; i <= this._amount; i++) {
+    for (let i = 0; i <= this._visibleAmount; i++) {
       const itemIndex = startIndex + i;
       const startOffset = (i - 3) * width;
       const percentage = (offset % width) / width;
@@ -202,7 +221,7 @@ export class RolodexDomain {
 
   private updateRolodexItems() {
     const width = this._width;
-    const amount = this._amount;
+    const amount = this._visibleAmount;
     const startIndex = this._startIndex;
     const start = this._offset + this._width;
     const adjustedWidth = width - width * 0.15;
@@ -241,12 +260,12 @@ export class RolodexDomain {
 
   private updateScrollState() {
     this._width = this.axis.size === 0 ? 0.00000001 : this.axis.size;
-    this._offset = this.axis.start * MULTIPLIER;
+    this._offset = this.axis.start * PAN_MULTIPLIER;
     this._index =
       this._offset < 0
         ? Math.ceil(this._offset / this._width)
         : Math.floor(this._offset / this._width);
-    this._startIndex = this._index - this._amount + 2;
+    this._startIndex = this._index - this._visibleAmount + 2;
   }
 
   dispose() {

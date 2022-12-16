@@ -3,8 +3,8 @@ import { useAsyncValue } from "ergo-hex";
 import { createUseStyles } from "react-jss";
 import { RolodexDomain } from "./rolodex_domain";
 import clsx from "clsx";
-import { useHorizontalResizing } from "./use_horizontal_resizing";
-import { useHorizontalPanning } from "./use_horizontal_panning";
+import { useHorizontalResizing } from "../use_horizontal_resizing";
+import { useHorizontalPanning } from "../use_horizontal_panning";
 
 const useStyles = createUseStyles(
   {

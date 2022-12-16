@@ -9,11 +9,13 @@ import {
 
 export class BlendMotion<T> {
   private _motion: Motion<{ value: number }>;
-  private _animation: Animation<{ value: T }>;
+  private _animation: Animation<{ value: T[] }>;
   private _transitionValue: number;
-  private _value: ObservableValue<T>;
+  private _value: ObservableValue<T[]>;
+  private _to: T[];
+  private _from: T[];
 
-  get valueBroadcast(): ReadonlyObservableValue<T> {
+  get valueBroadcast(): ReadonlyObservableValue<T[]> {
     return this._value;
   }
 
@@ -21,7 +23,10 @@ export class BlendMotion<T> {
     return this._value.getValue();
   }
 
-  constructor(from: T, to: T) {
+  constructor(from: T[], to: T[]) {
+    this._from = from;
+    this._to = to;
+
     this._motion = new Motion(({ currentValues }) => {
       this._transitionValue = currentValues.value;
       this.render();
@@ -39,15 +44,19 @@ export class BlendMotion<T> {
     this._value = new ObservableValue(this._animation.currentValues.value);
   }
 
-  updateKeyframe(from: T, to: T) {
-    this._animation.keyframes = [
-      new Keyframe({
-        property: "value",
-        from: from,
-        to: to,
-      }),
-    ];
-    this.render();
+  updateKeyframe(from: T[], to: T[]) {
+    const needsUpdate = from.length !== this._from.length;
+
+    if (needsUpdate) {
+      this._animation.keyframes = [
+        new Keyframe({
+          property: "value",
+          from: from,
+          to: to,
+        }),
+      ];
+      this.render();
+    }
   }
 
   private render() {

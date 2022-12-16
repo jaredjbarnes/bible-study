@@ -40,6 +40,9 @@ export function StackList({ domain, renderItem, style, className, onTap }: Stack
   useAsyncValue(domain.offsetBroadcast);
   useAsyncValue(domain.sizeBroadcast);
 
+  useHorizontalPanning(divRef,  domain);
+  useHorizontalResizing(divRef,  domain);
+
   useEffect(() => {
     domain.initialize(0);
   }, [domain]);

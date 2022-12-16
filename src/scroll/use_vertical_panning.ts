@@ -24,9 +24,7 @@ export function useVerticalPanning(
       }
 
       manager.on("tap", (e) => {
-        if (!domain.isScrolling) {
-          onTap && onTap(e.srcEvent);
-        }
+        onTap && onTap(e.srcEvent);
       });
 
       manager.on("panstart", (e) => {
